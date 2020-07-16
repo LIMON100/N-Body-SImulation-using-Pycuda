@@ -60,7 +60,7 @@ __device__ float calculate_velocity_change_planet(float* p, float* q , float* ac
 
 
 
-__device__ float calculate_velocity_change_block(float my_planet, float* shared_planets , float* velocities , float* acc2 , float* acc3)
+__device__ float calculate_velocity_change_block(float* my_planet, float* shared_planets , float* velocities , float* acc2 , float* acc3)
 {
 
     //float velocity [2] = {0.0 , 0.0};
@@ -69,7 +69,7 @@ __device__ float calculate_velocity_change_block(float my_planet, float* shared_
     
     for(int i = 0; i < blockDim.x; i++) {
     
-        *acc2 = calculate_velocity_change_planet(my_planet , shared_planets[i] , acc3);
+        *acc2 = calculate_velocity_change_planet(my_planet , (&shared_planets[i]) , acc3);
         
         velocities[0] += acc2[0];
         velocities[1] += acc3[1];
@@ -81,7 +81,8 @@ __device__ float calculate_velocity_change_block(float my_planet, float* shared_
 
 
 
-__global__ void update_velocities(float* planets, float* velocities , float planet_size , float* acc1 , float* acc2 , float* acc3){
+__global__ void update_velocities(float* planets, float* velocities , float planet_size , float* acc1 , float* acc2 , float* acc3)
+{
 
     int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     
@@ -96,16 +97,18 @@ __global__ void update_velocities(float* planets, float* velocities , float plan
         __syncthreads();
         
         //float *tempv[2];
-        *acc1 = calculate_velocity_change_block(my_planet, shared_planets , velocities , acc2 , acc3);
+        *acc1 = calculate_velocity_change_block(&my_planet, shared_planets , velocities , acc2 , acc3);
         
         //planets[thread_id]->velocities[0] += acc[0];
         //planets[thread_id]->velocities[1] += acc[1];
         
-        velocities[0] += acc1[0];
-        velocities[1] += acc1[1];
+        velocities[thread_id] += acc1[0];
+        velocities[thread_id] += acc1[1];
         
         __syncthreads();
     }
+    
+    return;
 }
 
 """)
@@ -115,6 +118,26 @@ __global__ void update_velocities(float* planets, float* velocities , float plan
 #eval_mod_ac = SourceModule(CalculateVelocities)
 eval_ker_cal = CalculateVelocities.get_function("update_velocities")
 
+
+
+DensePosition = SourceModule("""
+                             
+#define dT 0.01
+                             
+__global__ void update_positions(float* planets, float* velocities)
+{
+
+    int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+
+    planets[thread_id] += (velocities[thread_id]) * (dT);
+    planets[thread_id] += (velocities[thread_id]) * (dT);
+    
+}
+
+""")
+
+
+eval_ker_pos = DensePosition.get_function("update_positions")
 
 
 
@@ -159,11 +182,14 @@ class euler_integrator:
         self.mag = mag
         
         self.bodies = np.float32(bodies)
-        self.bodies_len = len(self.bodies)
         self.bodies_gpu = gpuarray.to_gpu(bodies)
         self.bodies_output_gpu = gpuarray.empty_like(self.bodies_gpu)
         
-    
+        
+        self.bodies_len = len(self.bodies)
+        self.bodies_len = np.float32(self.bodies_len)
+        
+        
         self.velocities = np.float32(bodies)
         self.velocities_gpu = gpuarray.to_gpu(self.velocities)
         self.velocities_output_gpu = gpuarray.empty_like(self.velocities_gpu)
@@ -171,16 +197,16 @@ class euler_integrator:
         
         self.acc1 = [0 , 0]
         self.acc1 = np.float32(self.acc1)
-        self.acc1_gpu = gpuarray.to_gpu(acc1)
+        self.acc1_gpu = gpuarray.to_gpu(self.acc1)
         
         
         self.acc2 = [0 , 0]
         self.acc2 = np.float32(self.acc2)
-        self.acc2_gpu = gpuarray.to_gpu(acc2)
+        self.acc2_gpu = gpuarray.to_gpu(self.acc2)
         
         self.acc3 = [0 , 0]
-        self.acc3 = np.float32(self.acc3_gpu)
-        self.acc3_gpu = gpuarray.to_gpu(acc3)
+        self.acc3 = np.float32(self.acc3)
+        self.acc3_gpu = gpuarray.to_gpu(self.acc3)
         
         
         self.block = (128 , 1 , 1)
@@ -209,10 +235,10 @@ class euler_integrator:
         qt = qTree(1, self.size[1], self.size[0])
         for body in self.bodies:
              
-            #eval_ker_pos(self.bodies_gpu , self.velocities_gpu  , block = self.block , grid = self.grid)
+            eval_ker_pos(self.bodies_gpu , self.velocities_output_gpu  , block = self.block , grid = self.grid)
             
-            body[X] += body[velx] * self.timestep
-            body[Y] += body[vely] * self.timestep
+            #body[X] += body[velx] * self.timestep
+            #body[Y] += body[vely] * self.timestep
             
             
             qt.addPoint(body[X], body[Y], body[mass])
@@ -244,31 +270,3 @@ def runSim(integrator, steps, bodies, Histo):
             except IndexError:
                 continue
     return Histo, c
-
-
-def addTrojanBody(bodies, count):
-    """
-    adds a small body where the trojan bodies are
-    """
-    for tmp in bodies:
-        
-        vel = [0 , 0]
-        
-        x1 = tmp[X]
-        y1 = tmp[Y]
-        
-        jupPhi = np.arctan2(y1, x1)
-        jupPhi -= np.pi / 6.
-        
-        vel[X] = tmp[velx] * (np.random.rand() * .1 + .9)
-        vel[Y] = tmp[vely] * (np.random.rand() * .1 + .9)
-        
-
-        
-    r = np.random.rand() * .2 + 5.1
-    phi = np.random.rand() * 6 + (jupPhi * (180 / np.pi))
-    phi *= (np.pi / 180.)
-    pos = point(r * np.cos(phi), r * np.sin(phi))
-    bodies.append(body(pos , vel , 1.652e-13))
-
-    return bodies
