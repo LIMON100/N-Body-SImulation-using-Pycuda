@@ -209,8 +209,9 @@ class euler_integrator:
         self.acc3_gpu = gpuarray.to_gpu(self.acc3)
         
         
-        self.block = (128 , 1 , 1)
-        self.grid = (8 , 1 , 1)
+        self.block = (64 , 1 , 1)
+        self.grid = (int(np.ceil(len(self.bodies) / 32)), 1,1)
+        #self.grid = (8 , 1 , 1)
         
     
 
@@ -224,22 +225,25 @@ class euler_integrator:
             
 
     def calcPosition(self):
-        """
-            updates postions and draws body on pygame screen
-            also calculates quadtree for the collection of bodies
-            returns list of children in quadtree for drawing
-            
-        """
+       
         
         body = []
         qt = qTree(1, self.size[1], self.size[0])
+        
         for body in self.bodies:
-             
-            eval_ker_pos(self.bodies_gpu , self.velocities_output_gpu  , block = self.block , grid = self.grid)
+            
+            #update korte hobe with body die.
+            
+            body = np.float32(body)
+            body_gpu = gpuarray.to_gpu(body)
+            
+            
+            eval_ker_pos(body_gpu , self.velocities_gpu  , block = self.block , grid = self.grid)
             
             #body[X] += body[velx] * self.timestep
             #body[Y] += body[vely] * self.timestep
             
+            body = body_gpu.get()
             
             qt.addPoint(body[X], body[Y], body[mass])
             
