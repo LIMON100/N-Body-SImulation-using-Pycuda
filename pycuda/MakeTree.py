@@ -42,15 +42,20 @@ class qTree():
     def __init__(self, k, mx, my):
         super(qTree, self).__init__()
         self.threshold = k
-        # [Point(random.uniform(0, 10), random.uniform(0, 10)) for x in range(n)]
+      
         self.points = []
         self.root = Node(-mx, -my, 2.*mx, 2.*my, self.points)
+
 
     def addPoint(self, x, y, mass):
         self.points.append(Point(x, y, mass))
 
+
+
     def subDivide(self):
         recursiveSubdivide(self.root, self.threshold)
+
+
 
     def graph(self):
         # fig, ax = plt.subplots()
@@ -141,3 +146,33 @@ def findChild(node):
         for child in node.children:
             children += (findChild(child))
     return children
+
+
+
+
+
+if __name__ == '__main__':
+        
+    k = 0.5
+    qt = qTree(k)
+
+    qt.addPoint(2.5, 2.5, 2)
+
+    qt.addPoint(2.5, 7.5, 2)
+
+    qt.addPoint(6.25, 1.25, 2)
+    qt.addPoint(8.75, 3.75, 2)
+
+    qt.addPoint(5.625, 8.375, 2)
+    qt.addPoint(6.775, 9.325, 2)
+    qt.addPoint(6.975, 9.325, 2)
+    qt.addPoint(6.75, 9.325, 2)
+
+    qt.addPoint(8.75, 8.75, 2)
+
+
+    qt.subDivide()
+    qt.graph()
+    objs = qt.getCom()
+
+

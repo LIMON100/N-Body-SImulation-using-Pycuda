@@ -235,13 +235,16 @@ class euler_integrator:
             
             eval_ker_pos(body_gpu , block = self.block , grid = self.grid)
             
-            body = body_gpu.get()
-            print(body)
+            body_out = body_gpu.get()
             
-            qt.addPoint(body[X], body[Y], body[mass])
+            #body = np.float32(body)
+            
+            print(body_out)
+            
+            qt.addPoint(body_out[X], body_out[Y], body_out[mass])
             
             pygame.draw.circle(self.screen,  LAWN_GREEN , (self.size[2] + int(
-                body[X] * self.mag), self.size[3] + int(body[Y] * self.mag)), 2)
+                body_out[X] * self.mag), self.size[3] + int(body_out[Y] * self.mag)), 2)
             
             
 

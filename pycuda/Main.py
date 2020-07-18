@@ -6,13 +6,6 @@ Created on Fri Jul  3 22:33:01 2020
 """
 
 
-#import os
-# if os.system("cl.exe"):
-#    os.environ['PATH'] += ';'+r"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.16.27023\bin\Hostx64\x64"
-# if os.system("cl.exe"):
-#    raise RuntimeError("cl.exe still not found, path probably incorrect")
-
-
 import pygame as pg
 import numpy as np
 import sys
@@ -93,6 +86,7 @@ def debugPrintOut(children, quad):
 
     fps = font.render("FPS:" + str(int(clock.get_fps())),
                       True, pg.Color('white'))
+    
     screen.blit(fps, (10, 10))
 
     Ocount = font.render("Bodies:" + str(count), True, pg.Color('white'))
@@ -104,6 +98,7 @@ def debugPrintOut(children, quad):
 
     stepsTxt = font.render("Steps done:" + str(steps), True, pg.Color('white'))
     screen.blit(stepsTxt, (10, 70))
+
 
 
 def removeBodyOutofBounds(bodies, count):
