@@ -29,7 +29,7 @@ WHITE = (255, 255, 255)
 
 def setupSolarSystem():
     particles = []
-    filename = ('testp.txt')
+    filename = ('test2.txt')
 
     with open(filename) as f:
         for line in f:
@@ -69,6 +69,7 @@ def setComFrame(bodies):
         vx += (body[mass] / totMass) * body[X]
         vy += (body[mass] / totMass) * body[Y]
 
+
     for body in bodies:
         body[X] -= rx
         body[Y] -= ry
@@ -78,57 +79,13 @@ def setComFrame(bodies):
     return bodies
 
 
-def debugPrintOut(children, quad):
-    if quad:
-        for n in children:
-            pg.draw.rect(screen, (255, 255, 255), [
-                         hWidth + int(n.x0 * mag), hHeight + int(n.y0 * mag), n.width * mag, n.height * mag], 1)
-
-    fps = font.render("FPS:" + str(int(clock.get_fps())),
-                      True, pg.Color('white'))
-    
-    screen.blit(fps, (10, 10))
-
-    Ocount = font.render("Bodies:" + str(count), True, pg.Color('white'))
-    screen.blit(Ocount, (10, 30))
-
-    masstxt = font.render("Total Mass:" + str(massTot),
-                          True, pg.Color('white'))
-    screen.blit(masstxt, (10, 50))
-
-    stepsTxt = font.render("Steps done:" + str(steps), True, pg.Color('white'))
-    screen.blit(stepsTxt, (10, 70))
-
-
-
-def removeBodyOutofBounds(bodies, count):
-    massTot = 0.
-    
-    for cbody in bodies:
-        massTot += cbody[mass]
-        if (cbody[X] * mag + 960) > 1920 or (cbody[X] * mag + 960) < 0:
-            bodies.remove(cbody)
-            count -= 1
-            
-        elif (cbody[Y] * mag + 540) > 1080 or (cbody[Y] * mag + 540) < 0:
-            bodies.remove(cbody)
-            count -= 1
-            
-    return bodies, massTot
-
-
-def writeOut(paths):
-    for path in paths:
-        file = open(path["name"] + ".dat", "w")
-        for i, j in zip(path["x"], path["y"]):
-            file.write(str(i) + " " + str(j) + " " + "\n")
-        file.close()
 
 
 if __name__ == '__main__':
 
     WIDTH = 1920
     HEIGHT = 1080
+    
     hWidth = int(WIDTH / 2)
     hHeight = int(HEIGHT / 2)
 
@@ -145,90 +102,24 @@ if __name__ == '__main__':
     clock = pg.time.Clock()
     size = WIDTH, HEIGHT
     screen = pg.display.set_mode(size, pg.RESIZABLE)
-    pg.display.set_caption("N-body simulator")
+    pg.display.set_caption("N-body simulator using PYCUDA")
 
     bodies = setupSolarSystem()
 
     systemHist = []
 
-    # for tmpBody in bodies:
-    #    systemHist.append({"x": [], "y": [], "z": [], "name": tmpBody.name})
 
-    #eval_mod = SourceModule(DenseEvalCode)
-    #eval_ker = eval_mod.get_function('dense_eval')
-    
-    # Before change body type or change it inside the euler_integrator call function.
-    
-    #integrator = eval_ker(euler_integrator(timestep = dt, bodies=bodies, screen = screen, size = [WIDTH, HEIGHT, hWidth, hHeight], mag = mag) ,  block=(64,1,1), grid=(1,1,1))
     integrator = euler_integrator(timestep = dt, bodies = np.float32(bodies), screen = screen, size = [
                                   WIDTH, HEIGHT, hWidth, hHeight], mag = mag)
     
     count = len(bodies)
 
     while True:
+        
         screen.fill((0, 0, 0))
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                writeOut(systemHist)
-                sys.exit()
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_d:
-                    debug = not debug
-                elif event.key == pg.K_t:
-                    trail = not trail
-                elif event.key == pg.K_q:
-                    drawQaud = not drawQaud
-                elif event.key == pg.K_p:
-                    mag += 1
-                    integrator.mag = mag
-                    mag = max(0, mag)
-                elif event.key == pg.K_o:
-                    mag -= 1
-                    integrator.mag = mag
-                    mag = max(0, mag)
-            if event.type == pg.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    bodies = addTrojanBody(bodies, count)
-                    count += 1
-                    systemHist.append(
-                        {"x": [], "y": [], "z": [], "name": f"added{count}"})
-                    integrator.bodies = bodies
-                elif event.button == 4:
-                    mag -= 1
-                    mag = max(0, mag)
-                    integrator.mag = mag
-                elif event.button == 5:
-                    mag += 1
-                    mag = max(0, mag)
-                    integrator.mag = mag
-
-            if event.type == pg.VIDEORESIZE:
-                oldSurface = screen
-                WIDTH = event.w
-                hWidth = int(WIDTH / 2)
-                HEIGHT = event.h
-                hHeight = int(HEIGHT / 2)
-                screen = pg.display.set_mode((event.w, event.h), pg.RESIZABLE)
-                integrator.screen = screen
-                integrator.size = [WIDTH, HEIGHT, hWidth, hHeight]
-                del oldSurface
-
+        
         systemHist, children = runSim(integrator, steps, bodies, systemHist)
-        if trail:
-            for i in systemHist:
-                xtmp = np.array(i["x"][-100:])*mag + hWidth
-                ytmp = np.array(i["y"][-100:])*mag + hHeight
-                xtmp = xtmp.astype(int)
-                ytmp = ytmp.astype(int)
-                pts = list(zip(xtmp, ytmp))
-
-                if len(pts) > 1:
-                    pg.draw.lines(screen, (255, 255, 255), False, pts, 1)
-
+        
         clock.tick()
-        bodies, massTot = removeBodyOutofBounds(bodies, count)
-        if debug:
-            debugPrintOut(children, drawQaud)
-
-        pg.display.flip()
+        
         steps += 1
