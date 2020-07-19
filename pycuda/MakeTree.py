@@ -68,7 +68,6 @@ class qTree():
         # plt.show()
         return
 
-
     def getCom(self):
         return getComHelper(self.root)
 
@@ -142,11 +141,38 @@ def calcCom(blah):
 def findChild(node):
     if not node.children:
         return [node]
-    
     else:
         children = []
-        
         for child in node.children:
             children += (findChild(child))
-            
     return children
+
+
+
+
+
+if __name__ == '__main__':
+        
+    k = 0.5
+    qt = qTree(k)
+
+    qt.addPoint(2.5, 2.5, 2)
+
+    qt.addPoint(2.5, 7.5, 2)
+
+    qt.addPoint(6.25, 1.25, 2)
+    qt.addPoint(8.75, 3.75, 2)
+
+    qt.addPoint(5.625, 8.375, 2)
+    qt.addPoint(6.775, 9.325, 2)
+    qt.addPoint(6.975, 9.325, 2)
+    qt.addPoint(6.75, 9.325, 2)
+
+    qt.addPoint(8.75, 8.75, 2)
+
+
+    qt.subDivide()
+    qt.graph()
+    objs = qt.getCom()
+
+

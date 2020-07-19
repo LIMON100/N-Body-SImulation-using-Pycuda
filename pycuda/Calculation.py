@@ -35,8 +35,8 @@ __global__ void dense_aceleration(float *targetBody , float *body , float *acc ,
     
     mag = 1. / pow(sqrt((pow((targetBody[0] - body[0]) , 2)) + (pow((targetBody[1] - body[1]) , 2))) , 3);
     
-    acc[0] += body[4] * ((body[1] - targetBody[0]) * (mag));
-    acc[1] += body[4] * ((body[1] - targetBody[0]) * (mag));
+    acc[thread_id] += body[4] * ((body[1] - targetBody[0]) * (mag));
+    acc[thread_id] += body[4] * ((body[1] - targetBody[0]) * (mag));
     
     
     //return acc;
@@ -64,9 +64,10 @@ DenseEvalVeclocity = SourceModule("""
 __global__ void dense_velocity(float *acc , float *targetBody)
 {
     
- 
-    targetBody[2] += (G * timestep) * (acc[0]);
-    targetBody[3] += (G * timestep) * (acc[1]);
+    int thread_id = blockIdx.x * blockDim.x + threadIdx.x;    
+
+    targetBody[thread_id] += (G * timestep) * (acc[0]);
+    targetBody[thread_id] += (G * timestep) * (acc[1]);
     
     
 }
@@ -223,28 +224,28 @@ class euler_integrator:
         
         for body in self.bodies:
             
-            #body[0] += (body[2]) * self.timestep;
-            #body[1] += (body[3]) * self.timestep;
+            body[0] += (body[2]) * self.timestep;
+            body[1] += (body[3]) * self.timestep;
             
             #print(body)
             
-            body = np.float32(body)
-            body_gpu = gpuarray.to_gpu(body)
+            #body = np.float32(body)
+            #body_gpu = gpuarray.to_gpu(body)
             
-            body_gpu_output = gpuarray.empty_like(body_gpu)
+            #body_gpu_output = gpuarray.empty_like(body_gpu)
             
-            eval_ker_pos(body_gpu , block = self.block , grid = self.grid)
+            #eval_ker_pos(body_gpu , block = self.block , grid = self.grid)
             
-            body_out = body_gpu.get()
+            #body_out = body_gpu.get()
             
             #body = np.float32(body)
             
-            print(body_out)
+            #print(body_out)
             
-            qt.addPoint(body_out[X], body_out[Y], body_out[mass])
+            qt.addPoint(body[X], body[Y], body[mass])
             
             pygame.draw.circle(self.screen,  LAWN_GREEN , (self.size[2] + int(
-                body_out[X] * self.mag), self.size[3] + int(body_out[Y] * self.mag)), 2)
+                body[X] * self.mag), self.size[3] + int(body[Y] * self.mag)), 2)
             
             
 
