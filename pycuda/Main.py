@@ -29,7 +29,7 @@ WHITE = (255, 255, 255)
 
 def setupSolarSystem():
     particles = []
-    filename = ('newplanets.txt')
+    filename = ('test2.txt')
 
     with open(filename) as f:
         for line in f:
@@ -46,17 +46,6 @@ def setupSolarSystem():
     
     #particles = np.float32(particles)
     #particles_gpu = gpuarray.to_gpu(particles)
-                
-    particles2 = []
-    
-    f = open('newplanets.txt', 'r').readlines() 
-    
-    N = len(f)
-    for i in range(0 , N): 
-        w = f[i].split()
-        particles2.append(w)
-    
-    particles2 = np.float32(particles2)
     
     bodies = setComFrame(particles)
 
@@ -79,6 +68,7 @@ def setComFrame(bodies):
         ry += (body[mass] / totMass) * body[Y]
         vx += (body[mass] / totMass) * body[X]
         vy += (body[mass] / totMass) * body[Y]
+
 
     for body in bodies:
         body[X] -= rx
@@ -140,23 +130,24 @@ if __name__ == '__main__':
 
     WIDTH = 1920
     HEIGHT = 1080
+    
     hWidth = int(WIDTH / 2)
     hHeight = int(HEIGHT / 2)
 
     # dt = 1./(10.*365.)
-    dt = 0.1
+    dt = 0.01
     debug = False
     drawQaud = False
     steps = 0
     trail = False
-    mag = 30
+    mag = 50
 
     pg.init()
     font = pg.font.Font(None, 30)
     clock = pg.time.Clock()
     size = WIDTH, HEIGHT
     screen = pg.display.set_mode(size, pg.RESIZABLE)
-    pg.display.set_caption("N-body simulator PYCUDA")
+    pg.display.set_caption("N-body simulator using PYCUDA")
 
     bodies = setupSolarSystem()
 
@@ -177,26 +168,35 @@ if __name__ == '__main__':
     count = len(bodies)
 
     while True:
+        
         screen.fill((0, 0, 0))
+        
         for event in pg.event.get():
+            
             if event.type == pg.QUIT:
                 writeOut(systemHist)
                 sys.exit()
+                
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_d:
                     debug = not debug
+                    
                 elif event.key == pg.K_t:
                     trail = not trail
+                    
                 elif event.key == pg.K_q:
                     drawQaud = not drawQaud
+                    
                 elif event.key == pg.K_p:
                     mag += 1
                     integrator.mag = mag
                     mag = max(0, mag)
+                    
                 elif event.key == pg.K_o:
                     mag -= 1
                     integrator.mag = mag
                     mag = max(0, mag)
+                    
             if event.type == pg.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     bodies = addTrojanBody(bodies, count)
@@ -234,10 +234,10 @@ if __name__ == '__main__':
                 pts = list(zip(xtmp, ytmp))
 
                 if len(pts) > 1:
-                    pg.draw.lines(screen, (255, 255, 255), True, pts, 1)
+                    pg.draw.lines(screen, (255, 255, 255), False, pts, 1)
 
         clock.tick()
-        #bodies, massTot = removeBodyOutofBounds(bodies, count)
+        bodies, massTot = removeBodyOutofBounds(bodies, count)
         if debug:
             debugPrintOut(children, drawQaud)
 
