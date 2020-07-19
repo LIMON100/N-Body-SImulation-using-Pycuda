@@ -29,7 +29,7 @@ WHITE = (255, 255, 255)
 
 def setupSolarSystem():
     particles = []
-    filename = ('test2.txt')
+    filename = ('newplanets.txt')
 
     with open(filename) as f:
         for line in f:
@@ -49,7 +49,7 @@ def setupSolarSystem():
                 
     particles2 = []
     
-    f = open('test3.txt', 'r').readlines() 
+    f = open('newplanets.txt', 'r').readlines() 
     
     N = len(f)
     for i in range(0 , N): 
@@ -58,7 +58,7 @@ def setupSolarSystem():
     
     particles2 = np.float32(particles2)
     
-    bodies = setComFrame(particles2)
+    bodies = setComFrame(particles)
 
     return bodies
 
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     drawQaud = False
     steps = 0
     trail = False
-    mag = 50
+    mag = 30
 
     pg.init()
     font = pg.font.Font(None, 30)
