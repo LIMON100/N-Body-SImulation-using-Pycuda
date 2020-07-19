@@ -37,9 +37,7 @@ __global__ void dense_aceleration(float *targetBody , float *body , float *acc ,
     
     acc[thread_id] += body[4] * ((body[1] - targetBody[0]) * (mag));
     acc[thread_id] += body[4] * ((body[1] - targetBody[0]) * (mag));
-    
-    
-    //return acc;
+       
 
 }
 """)
@@ -179,13 +177,13 @@ class euler_integrator:
             body_output_gpu = gpuarray.empty_like(body_gpu)
             
             if idx != bodyIdx:
-                               
                 
                 eval_ker_ac(targetBody_gpu , body_gpu , self.acc_gpu , self.mag , block = self.block , grid = self.grid)
         
         
         aclarte_out = self.acc_gpu.get()
         #print(aclarte_out)
+        
         return aclarte_out
         
         
@@ -198,6 +196,7 @@ class euler_integrator:
             acc = np.float32(acc)
             acc_gpu = gpuarray.to_gpu(acc)
             
+            print(acc_gpu)
             
             targetBody = np.float32(targetBody)
             targetBody_gpu = gpuarray.to_gpu(targetBody)
@@ -224,19 +223,21 @@ class euler_integrator:
         
         for body in self.bodies:
             
-            body[0] += (body[2]) * self.timestep;
-            body[1] += (body[3]) * self.timestep;
+            #body[0] += (body[2]) * self.timestep;
+            #body[1] += (body[3]) * self.timestep;
             
             #print(body)
             
-            #body = np.float32(body)
-            #body_gpu = gpuarray.to_gpu(body)
+            body = np.float32(body)
+            body_gpu = gpuarray.to_gpu(body)
             
-            #body_gpu_output = gpuarray.empty_like(body_gpu)
+            body_gpu_output = gpuarray.empty_like(body_gpu)
             
-            #eval_ker_pos(body_gpu , block = self.block , grid = self.grid)
+            eval_ker_pos(body_gpu , block = self.block , grid = self.grid)
             
-            #body_out = body_gpu.get()
+            body_out = body_gpu.get()
+            
+            body = body_out
             
             #body = np.float32(body)
             
@@ -245,7 +246,7 @@ class euler_integrator:
             qt.addPoint(body[X], body[Y], body[mass])
             
             pygame.draw.circle(self.screen,  LAWN_GREEN , (self.size[2] + int(
-                body[X] * self.mag), self.size[3] + int(body[Y] * self.mag)), 2)
+                body[X] * self.mag), self.size[3] + int(body[Y] * self.mag)), 1)
             
             
 
