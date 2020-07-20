@@ -89,8 +89,8 @@ __global__ void update_velocities(float* planets, float* velocities , float plan
         *acc1 = calculate_velocity_change_block(&my_planet, shared_planets , acc2 , acc3);
 
         
-        velocities[0] += acc1[0];
-        velocities[1] += acc1[1];
+        velocities[thread_id] += acc1[0];
+        velocities[thread_id] += acc1[1];
         
         __syncthreads();
     }
@@ -116,8 +116,8 @@ __global__ void update_positions(float* planets, float* velocities)
 
     int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
 
-    planets[0] += (velocities[0]) * (dT);
-    planets[1] += (velocities[1]) * (dT);
+    planets[0] += (velocities[2]) * (dT);
+    planets[1] += (velocities[3]) * (dT);
     
     
 }
@@ -163,6 +163,7 @@ class euler_integrator:
 
     def __init__(self, timestep, bodies, screen, size, mag):
         
+        
         self.timestep = timestep
         self.bodies = bodies
         self.screen = screen
@@ -199,8 +200,8 @@ class euler_integrator:
         
         
         self.block = (70 , 1 , 1)
-        self.grid = (int(np.ceil(len(self.bodies) / 32)), 1,1)
-        #self.grid = (8 , 1 , 1)
+        self.grid = (int(np.ceil(len(self.bodies) / 70)), 1,1)
+        #self.grid = (1 , 1 , 1)
         
     
 
@@ -213,7 +214,7 @@ class euler_integrator:
         
         x_test = self.velocities_gpu.get()
         #print(x_test)
-        #return x_test
+        return x_test
         
 
     def calcPosition(self):
@@ -224,9 +225,24 @@ class euler_integrator:
             
             
             
-            body[0] += body[2] * self.timestep
-            body[1] += body[3] * self.timestep
+            #body[0] += body[2] * self.timestep
+            #body[1] += body[3] * self.timestep
             
+            
+            body_out = np.float32(body)
+            body_out_gpu = gpuarray.to_gpu(body_out)
+            
+            
+            vel_out = self.calcVelocity()
+            vel_out = np.float32(vel_out)
+            vel_out_gpu = gpuarray.to_gpu(vel_out)
+            
+            
+            eval_ker_pos(body_out_gpu , vel_out_gpu  , block = self.block , grid = self.grid)
+            
+            body = body_out_gpu.get()
+            body = np.float32(body)
+            print(body[0])
             
             #body_out = self.calcVelocity()
             #body_out = np.float32(body_out)
@@ -255,9 +271,9 @@ class euler_integrator:
             #body = np.int32(body)
             
             #qt.addPoint(body_new[X][X], body_new[Y][Y], body_new[mass][mass])
-            qt.addPoint(body[X], body[Y], body[mass])
+            qt.addPoint(abs(body[X]), abs(body[Y]), abs(body[mass]))
             
-            pygame.draw.circle(self.screen,  WHITE , (self.size[2] + int(body[X] * self.mag), self.size[3] + int(body[Y] * self.mag)) , 2)
+            pygame.draw.circle(self.screen,  WHITE , (self.size[2] + int(abs(body[X]) * self.mag), self.size[3] + int(abs(body[Y]) * self.mag)) , 2)
             
             
             
