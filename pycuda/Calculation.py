@@ -199,8 +199,9 @@ class euler_integrator:
         self.acc3_gpu = gpuarray.to_gpu(self.acc3)
         
         
-        self.block = (70 , 1 , 1)
-        self.grid = (int(np.ceil(len(self.bodies) / 70)), 1,1)
+        self.block = (100 , 1 , 1)
+        self.grid = (int(np.ceil(len(self.bodies) / 32)), 1,1)
+        #self.grid = len(self.bodies)/100 + ((self.bodies % 100 == 0) ? 0 : 1);
         #self.grid = (1 , 1 , 1)
         
     
@@ -225,23 +226,23 @@ class euler_integrator:
             
             
             
-            #body[0] += body[2] * self.timestep
-            #body[1] += body[3] * self.timestep
+            body[0] += body[2] * self.timestep
+            body[1] += body[3] * self.timestep
             
             
-            body_out = np.float32(body)
-            body_out_gpu = gpuarray.to_gpu(body_out)
+            #body_out = np.float32(body)
+            #body_out_gpu = gpuarray.to_gpu(body_out)
             
             
-            vel_out = self.calcVelocity()
-            vel_out = np.float32(vel_out)
-            vel_out_gpu = gpuarray.to_gpu(vel_out)
+            #vel_out = self.calcVelocity()
+            #vel_out = np.float32(vel_out)
+            #vel_out_gpu = gpuarray.to_gpu(vel_out)
             
             
-            eval_ker_pos(body_out_gpu , vel_out_gpu  , block = self.block , grid = self.grid)
+            #eval_ker_pos(body_out_gpu , vel_out_gpu  , block = self.block , grid = self.grid)
             
-            body = body_out_gpu.get()
-            body = np.float32(body)
+            #body = body_out_gpu.get()
+            #body = np.float32(body)
             print(body[0])
             
             #body_out = self.calcVelocity()
@@ -271,7 +272,12 @@ class euler_integrator:
             #body = np.int32(body)
             
             #qt.addPoint(body_new[X][X], body_new[Y][Y], body_new[mass][mass])
-            qt.addPoint(abs(body[X]), abs(body[Y]), abs(body[mass]))
+            
+            #qt.addPoint(body[X], body[Y],body[mass])
+            
+            #pygame.draw.circle(self.screen,  WHITE , (self.size[2] + int(body[X] * self.mag), self.size[3] + int(body[Y] * self.mag)) , 2)
+            
+            qt.addPoint(abs(body[X]), abs(body[Y]),abs(body[mass]))
             
             pygame.draw.circle(self.screen,  WHITE , (self.size[2] + int(abs(body[X]) * self.mag), self.size[3] + int(abs(body[Y]) * self.mag)) , 2)
             

@@ -35,7 +35,7 @@ WHITE = (255, 255, 255)
 
 def setupSolarSystem():
     particles = []
-    filename = ('newplanets.txt')
+    filename = ('newplanets2.txt')
     
     with open(filename) as f:
         for line in f:
@@ -48,7 +48,7 @@ def setupSolarSystem():
                 particles.append([float(x) , float(y) , float(vx) , float(vy) , float(m)])
 
               
-                
+
     
     #particles = np.float32(particles)
     #particles_gpu = gpuarray.to_gpu(particles)
@@ -94,8 +94,8 @@ def debugPrintOut(children, quad):
     Ocount = font.render("Bodies:" + str(count), True, pg.Color('white'))
     screen.blit(Ocount, (10, 30))
 
-    masstxt = font.render("Total Mass:" + str(massTot), True, pg.Color('white'))
-    screen.blit(masstxt, (10, 50))
+    #masstxt = font.render("Total Mass:" + str(massTot), True, pg.Color('white'))
+    #screen.blit(masstxt, (10, 50))
 
     stepsTxt = font.render("Steps done:" + str(steps), True, pg.Color('white'))
     screen.blit(stepsTxt, (10, 70))
@@ -130,8 +130,9 @@ if __name__ == '__main__':
     HEIGHT = 1080
     hWidth = int(WIDTH / 2)
     hHeight = int(HEIGHT / 2)
+    
 
-
+    #dt = 0.01
     dt = 0.01
     debug = False
     drawQaud = False

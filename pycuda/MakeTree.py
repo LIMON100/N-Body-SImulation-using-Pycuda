@@ -16,7 +16,6 @@ import sys
 
 class Point():
     """docstring for Point"""
-
     def __init__(self, x, y, mass):
         self.x = x
         self.y = y
@@ -25,7 +24,6 @@ class Point():
 
 class Node():
     """docstring for Node"""
-
     def __init__(self, x0, y0, w, h, points):
         self.x0 = x0
         self.y0 = y0
@@ -38,12 +36,11 @@ class Node():
 
 class qTree():
     """docstring for qTree"""
-
+    
     def __init__(self, k, mx, my):
         super(qTree, self).__init__()
         self.threshold = k
-      
-        self.points = []
+        self.points = [] #[Point(random.uniform(0, 10), random.uniform(0, 10)) for x in range(n)]
         self.root = Node(-mx, -my, 2.*mx, 2.*my, self.points)
 
 
@@ -51,17 +48,15 @@ class qTree():
         self.points.append(Point(x, y, mass))
 
 
-
     def subDivide(self):
         recursiveSubdivide(self.root, self.threshold)
-
 
 
     def graph(self):
         # fig, ax = plt.subplots()
         c = findChild(self.root)
         # for n in c:
-        # ax.add_patch(patches.Rectangle((n.x0, n.y0), n.width, n.height, fill=False))
+            # ax.add_patch(patches.Rectangle((n.x0, n.y0), n.width, n.height, fill=False))
         x = [point.x for point in self.points]
         y = [point.y for point in self.points]
         # plt.scatter(x, y)
@@ -142,11 +137,9 @@ def calcCom(blah):
 def findChild(node):
     if not node.children:
         return [node]
-    
     else:
         children = []
-        
         for child in node.children:
             children += (findChild(child))
-            
     return children
+
