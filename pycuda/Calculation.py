@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jul 22 12:19:36 2020
+
+@author: limon
+"""
+
+
 import pycuda.autoinit
 import pycuda.driver as drv
 from pycuda.compiler import SourceModule
